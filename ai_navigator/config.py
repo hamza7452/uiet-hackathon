@@ -2,9 +2,9 @@
 Configuration settings for Robot Navigation AI
 """
 
-# Environment Settings - Updated for your sim-11
-API_BASE_URL = "http://localhost:5000"    # Changed from 5001 to 5000
-WEBSOCKET_URL = "ws://localhost:8080"     # This is correct
+# Environment Settings - Match your simulation server exactly
+API_BASE_URL = "http://localhost:5000"
+WEBSOCKET_URL = "ws://localhost:5000"  # Changed to match Flask-SocketIO
 
 # Canvas Settings - Match your sim-11 canvas size
 CANVAS_WIDTH = 650

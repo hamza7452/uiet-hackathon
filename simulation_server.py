@@ -7,15 +7,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'robot_navigation_secret'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Global state
+# Global robot state
 robot_state = {
     "position": {"x": 320, "y": 300},
-    "goal": {"x": 550, "y": 80},
+    "goal": {"x": 550, "y": 80}, 
     "collision_count": 0,
     "goal_reached": False,
-    "is_moving": False
+    "is_moving": False,
+    "path": []
 }
 
+# Obstacles matching your SIM images
 obstacles = [
     {"x": 150, "y": 120, "size": 25},
     {"x": 450, "y": 180, "size": 25},
@@ -49,17 +51,34 @@ def move_robot():
     robot_state["position"] = {"x": data["x"], "y": data["y"]}
     robot_state["is_moving"] = True
     
-    # Emit position update via WebSocket
+    # Check if goal is reached
+    goal_x, goal_y = robot_state["goal"]["x"], robot_state["goal"]["y"]
+    robot_x, robot_y = data["x"], data["y"]
+    distance = ((robot_x - goal_x)**2 + (robot_y - goal_y)**2)**0.5
+    
+    if distance < 30:
+        robot_state["goal_reached"] = True
+        print(f"🎯 GOAL REACHED! Robot at ({robot_x:.1f}, {robot_y:.1f})")
+        socketio.emit('goal_reached', {"message": "🎯 Goal Reached!", "position": robot_state["position"]})
+    
+    # Emit real-time position update to all connected clients
     socketio.emit('robot_update', {
         'robot_position': robot_state["position"],
-        'is_moving': True
+        'is_moving': True,
+        'goal_reached': robot_state["goal_reached"]
     })
     
-    return jsonify({"success": True})
+    print(f"🤖 Robot moved to: ({data['x']:.1f}, {data['y']:.1f}) - Distance to goal: {distance:.1f}px")
+    
+    return jsonify({
+        "success": True, 
+        "goal_reached": robot_state["goal_reached"]
+    })
 
 @app.route('/stop', methods=['POST'])
 def stop_robot():
     robot_state["is_moving"] = False
+    print("🛑 Robot stopped")
     return jsonify({"success": True})
 
 @app.route('/goal/status')
@@ -69,14 +88,39 @@ def goal_status():
 @app.route('/reset', methods=['POST'])
 def reset_simulation():
     robot_state.update({
+        "position": {"x": 320, "y": 300},
         "collision_count": 0,
         "goal_reached": False,
-        "is_moving": False
+        "is_moving": False,
+        "path": []
     })
+    socketio.emit('simulation_reset', {"message": "🔄 Simulation reset"})
+    print("🔄 Simulation state reset")
     return jsonify({"success": True})
+
+@app.route('/set_path', methods=['POST'])
+def set_path():
+    """Receive calculated path from AI for visualization"""
+    data = request.json
+    robot_state["path"] = data.get("path", [])
+    socketio.emit('path_update', {"path": robot_state["path"]})
+    print(f"📍 Path received with {len(robot_state['path'])} waypoints")
+    return jsonify({"success": True})
+
+# WebSocket events
+@socketio.on('connect')
+def handle_connect():
+    print('🔌 Client connected to WebSocket')
+    emit('connected', {'data': 'Connected to robot simulation'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('🔌 Client disconnected from WebSocket')
 
 if __name__ == '__main__':
     print("🚀 Starting Robot Simulation Server...")
-    print("📍 Flask API: http://localhost:5000")
-    print("🔌 WebSocket: ws://localhost:8080")
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    print("📍 Web Interface: http://localhost:5000")
+    print("🔌 WebSocket: http://localhost:5000 (SocketIO)")
+    print("🎯 Ready for AI navigation!")
+    
+    socketio.run(app, host='localhost', port=5000, debug=True, allow_unsafe_werkzeug=True)

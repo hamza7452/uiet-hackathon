@@ -1,31 +1,164 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Robot Navigation Simulation</title>
+    <title>🤖 AI Robot Navigation - Live Demo</title>
     <style>
-        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f0f0f0; }
-        canvas { border: 2px solid #333; background: white; display: block; margin: 20px auto; }
-        .controls { text-align: center; margin: 20px; }
-        .info { text-align: center; margin: 10px; }
-        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+        body { 
+            margin: 0; padding: 20px; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 2.5em; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .subtitle { text-align: center; font-size: 1.2em; margin-bottom: 20px; opacity: 0.9; }
+        
+        .main-content { display: flex; gap: 20px; align-items: flex-start; }
+        .canvas-section { flex: 1; }
+        .info-section { width: 300px; }
+        
+        canvas { 
+            border: 3px solid #fff; 
+            background: white; 
+            display: block; 
+            margin: 0 auto; 
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .controls { 
+            text-align: center; 
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        button { 
+            padding: 12px 25px; 
+            font-size: 16px; 
+            border: none; 
+            border-radius: 25px; 
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .status-panel, .legend {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .status-panel h3, .legend h3 { margin: 0 0 15px 0; font-size: 1.3em; }
+        .status-item { 
+            margin: 8px 0; 
+            padding: 8px; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 5px; 
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .live-log {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin: 3px 0;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .log-success { background: rgba(0,255,0,0.1); }
+        .log-info { background: rgba(0,150,255,0.1); }
+        .log-warning { background: rgba(255,150,0,0.1); }
+        
+        @media (max-width: 768px) {
+            .main-content { flex-direction: column; }
+            .info-section { width: 100%; }
+            canvas { width: 100%; height: auto; }
+        }
     </style>
 </head>
 <body>
-    <div class="info">
-        <h1>🤖 AI Robot Navigation Simulation</h1>
-        <p>Red dot = Robot | Green dot = Goal | Gray squares = Obstacles</p>
-    </div>
-    
-    <canvas id="simulationCanvas" width="650" height="600"></canvas>
-    
-    <div class="controls">
-        <button onclick="resetSimulation()">Reset</button>
-        <button onclick="startAI()">Start AI Navigation</button>
-    </div>
-    
-    <div class="info">
-        <p>Status: <span id="status">Ready</span></p>
-        <p>Collisions: <span id="collisions">0</span></p>
+    <div class="container">
+        <h1>🤖 AI Robot Navigation</h1>
+        <p class="subtitle">Live Autonomous Pathfinding with Obstacle Avoidance</p>
+        
+        <div class="main-content">
+            <div class="canvas-section">
+                <canvas id="simulationCanvas" width="650" height="600"></canvas>
+                
+                <div class="controls">
+                    <button onclick="resetSimulation()">🔄 Reset</button>
+                    <button onclick="togglePath()">👁️ Toggle Path</button>
+                    <button onclick="clearLog()">🗑️ Clear Log</button>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="legend">
+                    <h3>🎯 Legend</h3>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff0000;"></span>
+                        Robot (AI Controlled)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #00ff00;"></span>
+                        Target Goal
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #666; border-radius: 3px;"></span>
+                        Obstacles
+                    </div>
+                    <div class="legend-item">
+                        <span style="width: 20px; height: 3px; background: #00ff00; margin-right: 10px; border-radius: 2px;"></span>
+                        Calculated Path
+                    </div>
+                </div>
+                
+                <div class="status-panel">
+                    <h3>📊 Live Status</h3>
+                    <div class="status-item"><strong>Status:</strong> <span id="status">Ready</span></div>
+                    <div class="status-item"><strong>Robot Position:</strong> <span id="robotPos">320, 300</span></div>
+                    <div class="status-item"><strong>Goal Reached:</strong> <span id="goalReached">No</span></div>
+                    <div class="status-item"><strong>Distance to Goal:</strong> <span id="goalDistance">-</span></div>
+                    <div class="status-item"><strong>Path Waypoints:</strong> <span id="pathWaypoints">0</span></div>
+                    <div class="status-item"><strong>Connection:</strong> <span id="connection">Connecting...</span></div>
+                </div>
+                
+                <div class="live-log">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.1em;">📝 Live Log</h3>
+                    <div id="logContainer"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
@@ -37,7 +170,9 @@
         let robotPos = {x: 320, y: 300};
         let goalPos = {x: 550, y: 80};
         let obstacles = [];
-        let collisionCount = 0;
+        let path = [];
+        let showPath = true;
+        let goalReached = false;
         
         // WebSocket connection
         const socket = io();
@@ -47,54 +182,183 @@
             .then(response => response.json())
             .then(data => {
                 obstacles = data;
+                addLog(`📍 Loaded ${obstacles.length} obstacles`, 'info');
                 render();
-            });
+            })
+            .catch(err => addLog(`❌ Error loading obstacles: ${err}`, 'warning'));
         
         function render() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw obstacles
+            // Draw calculated path
+            if (showPath && path.length > 1) {
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                ctx.moveTo(path[0].x, path[0].y);
+                for (let i = 1; i < path.length; i++) {
+                    ctx.lineTo(path[i].x, path[i].y);
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Draw waypoint markers
+                ctx.fillStyle = 'rgba(0,255,0,0.3)';
+                for (let i = 0; i < path.length; i++) {
+                    ctx.beginPath();
+                    ctx.arc(path[i].x, path[i].y, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            
+            // Draw obstacles with shadow
             ctx.fillStyle = '#666';
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 5;
             obstacles.forEach(obs => {
                 ctx.fillRect(obs.x - obs.size/2, obs.y - obs.size/2, obs.size, obs.size);
             });
+            ctx.shadowBlur = 0;
             
-            // Draw goal (green)
-            ctx.fillStyle = '#00ff00';
+            // Draw goal with glow effect
+            if (goalReached) {
+                // Celebration effect
+                ctx.fillStyle = '#ffff00';
+                ctx.shadowColor = '#ffff00';
+                ctx.shadowBlur = 20;
+            } else {
+                ctx.fillStyle = '#00ff00';
+                ctx.shadowColor = '#00ff00';
+                ctx.shadowBlur = 10;
+            }
             ctx.beginPath();
             ctx.arc(goalPos.x, goalPos.y, 15, 0, 2 * Math.PI);
             ctx.fill();
+            ctx.shadowBlur = 0;
             
-            // Draw robot (red)
+            // Draw robot with trail effect
             ctx.fillStyle = '#ff0000';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 8;
             ctx.beginPath();
             ctx.arc(robotPos.x, robotPos.y, 18, 0, 2 * Math.PI);
             ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Draw direction indicator
+            if (path.length > 1) {
+                let nextWaypoint = path.find(p => 
+                    Math.sqrt((p.x - robotPos.x)**2 + (p.y - robotPos.y)**2) > 20
+                );
+                if (nextWaypoint) {
+                    let angle = Math.atan2(nextWaypoint.y - robotPos.y, nextWaypoint.x - robotPos.x);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(robotPos.x, robotPos.y);
+                    ctx.lineTo(
+                        robotPos.x + 25 * Math.cos(angle),
+                        robotPos.y + 25 * Math.sin(angle)
+                    );
+                    ctx.stroke();
+                }
+            }
+            
+            updateStatusDisplay();
         }
         
-        // WebSocket event handlers
+        function updateStatusDisplay() {
+            document.getElementById('robotPos').textContent = `${Math.round(robotPos.x)}, ${Math.round(robotPos.y)}`;
+            document.getElementById('goalReached').textContent = goalReached ? 'Yes! 🎉' : 'No';
+            document.getElementById('pathWaypoints').textContent = path.length;
+            
+            // Calculate distance to goal
+            let distance = Math.sqrt((robotPos.x - goalPos.x)**2 + (robotPos.y - goalPos.y)**2);
+            document.getElementById('goalDistance').textContent = `${Math.round(distance)}px`;
+        }
+        
+        // Socket event handlers
+        socket.on('connect', () => {
+            document.getElementById('connection').textContent = '✅ Connected';
+            document.getElementById('connection').style.color = '#00ff00';
+            addLog('🔌 Connected to simulation server', 'success');
+        });
+        
+        socket.on('disconnect', () => {
+            document.getElementById('connection').textContent = '❌ Disconnected';
+            document.getElementById('connection').style.color = '#ff0000';
+            addLog('🔌 Disconnected from server', 'warning');
+        });
+        
         socket.on('robot_update', (data) => {
             robotPos = data.robot_position;
+            goalReached = data.goal_reached || false;
+            if (goalReached && !document.getElementById('status').textContent.includes('Goal')) {
+                document.getElementById('status').textContent = '🎯 Goal Reached!';
+                addLog('🎉 GOAL REACHED! Mission accomplished!', 'success');
+            }
             render();
         });
         
+        socket.on('goal_reached', (data) => {
+            goalReached = true;
+            document.getElementById('status').textContent = data.message;
+            addLog(`🎯 ${data.message}`, 'success');
+            render();
+        });
+        
+        socket.on('path_update', (data) => {
+            path = data.path || [];
+            addLog(`📍 Path updated: ${path.length} waypoints`, 'info');
+            render();
+        });
+        
+        socket.on('simulation_reset', (data) => {
+            robotPos = {x: 320, y: 300};
+            goalReached = false;
+            path = [];
+            document.getElementById('status').textContent = 'Reset Complete';
+            addLog('🔄 Simulation reset', 'info');
+            render();
+        });
+        
+        // Control functions
         function resetSimulation() {
             fetch('/reset', {method: 'POST'})
+                .then(response => response.json())
                 .then(() => {
-                    robotPos = {x: 320, y: 300};
-                    collisionCount = 0;
-                    document.getElementById('collisions').textContent = '0';
-                    document.getElementById('status').textContent = 'Reset';
-                    render();
+                    addLog('🔄 Reset requested', 'info');
                 });
         }
         
-        function startAI() {
-            document.getElementById('status').textContent = 'AI Navigation Active';
-            // The AI will connect and start navigation automatically
+        function togglePath() {
+            showPath = !showPath;
+            addLog(`👁️ Path visibility: ${showPath ? 'ON' : 'OFF'}`, 'info');
+            render();
         }
         
-        render(); // Initial render
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+        }
+        
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Keep only last 50 log entries
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+        
+        // Initial render
+        render();
+        addLog('🚀 AI Robot Navigation System initialized', 'success');
     </script>
 </body>
 </html>
