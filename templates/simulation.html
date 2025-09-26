@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Robot Navigation Simulation</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f0f0f0; }
+        canvas { border: 2px solid #333; background: white; display: block; margin: 20px auto; }
+        .controls { text-align: center; margin: 20px; }
+        .info { text-align: center; margin: 10px; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>🤖 AI Robot Navigation Simulation</h1>
+        <p>Red dot = Robot | Green dot = Goal | Gray squares = Obstacles</p>
+    </div>
+    
+    <canvas id="simulationCanvas" width="650" height="600"></canvas>
+    
+    <div class="controls">
+        <button onclick="resetSimulation()">Reset</button>
+        <button onclick="startAI()">Start AI Navigation</button>
+    </div>
+    
+    <div class="info">
+        <p>Status: <span id="status">Ready</span></p>
+        <p>Collisions: <span id="collisions">0</span></p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Simulation state
+        let robotPos = {x: 320, y: 300};
+        let goalPos = {x: 550, y: 80};
+        let obstacles = [];
+        let collisionCount = 0;
+        
+        // WebSocket connection
+        const socket = io();
+        
+        // Load obstacles and start rendering
+        fetch('/obstacles')
+            .then(response => response.json())
+            .then(data => {
+                obstacles = data;
+                render();
+            });
+        
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw obstacles
+            ctx.fillStyle = '#666';
+            obstacles.forEach(obs => {
+                ctx.fillRect(obs.x - obs.size/2, obs.y - obs.size/2, obs.size, obs.size);
+            });
+            
+            // Draw goal (green)
+            ctx.fillStyle = '#00ff00';
+            ctx.beginPath();
+            ctx.arc(goalPos.x, goalPos.y, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw robot (red)
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(robotPos.x, robotPos.y, 18, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        
+        // WebSocket event handlers
+        socket.on('robot_update', (data) => {
+            robotPos = data.robot_position;
+            render();
+        });
+        
+        function resetSimulation() {
+            fetch('/reset', {method: 'POST'})
+                .then(() => {
+                    robotPos = {x: 320, y: 300};
+                    collisionCount = 0;
+                    document.getElementById('collisions').textContent = '0';
+                    document.getElementById('status').textContent = 'Reset';
+                    render();
+                });
+        }
+        
+        function startAI() {
+            document.getElementById('status').textContent = 'AI Navigation Active';
+            // The AI will connect and start navigation automatically
+        }
+        
+        render(); // Initial render
+    </script>
+</body>
+</html>

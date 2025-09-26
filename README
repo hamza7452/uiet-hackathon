@@ -1,0 +1,14 @@
+# AI Robot Navigation System
+
+Autonomous 2D robot navigation using A* pathfinding with collision avoidance.
+
+## Quick Start
+1. Install dependencies: `pip install -r requirements.txt`
+2. Run the simulation environment (Flask server)
+3. Execute AI navigation: `python run_ai.py`
+
+## Features
+- A* pathfinding with obstacle avoidance
+- Real-time collision detection
+- WebSocket communication
+- Adaptive safety margins
