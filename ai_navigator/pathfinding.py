@@ -7,6 +7,7 @@ from typing import List, Dict, Set, Optional, Tuple
 from .utils import Point, Node, euclidean_distance, is_point_in_bounds, format_point_list
 from .collision_detector import Obstacle, CollisionDetector
 
+
 class AStarPathfinder:
     """A* pathfinding implementation with obstacle avoidance"""
     
@@ -148,8 +149,9 @@ class AStarPathfinder:
             print("❌ Start or goal position is in collision with obstacles")
             return None
         
-        # A* algorithm implementation
-        open_set = []  # Priority queue: (f_score, grid_point)
+        # A* algorithm implementation with counter for tie-breaking
+        counter = 0
+        open_set = []  # Priority queue: (f_score, counter, grid_point)
         closed_set: Set[Point] = set()  # Explored nodes
         came_from: Dict[Point, Point] = {}  # Path reconstruction
         
@@ -157,7 +159,8 @@ class AStarPathfinder:
         g_score: Dict[Point, float] = {start_grid: 0}
         f_score: Dict[Point, float] = {start_grid: self.heuristic(start, goal, heuristic_type)}
         
-        heapq.heappush(open_set, (f_score[start_grid], start_grid))
+        counter += 1
+        heapq.heappush(open_set, (f_score[start_grid], counter, start_grid))
         
         iterations = 0
         max_iterations = 10000
@@ -165,8 +168,8 @@ class AStarPathfinder:
         while open_set and iterations < max_iterations:
             iterations += 1
             
-            # Get node with lowest f_score
-            current_f, current_grid = heapq.heappop(open_set)
+            # Get node with lowest f_score (now includes counter for tie-breaking)
+            current_f, _, current_grid = heapq.heappop(open_set)
             
             # Check if we reached the goal
             if current_grid.x == goal_grid.x and current_grid.y == goal_grid.y:
@@ -197,9 +200,10 @@ class AStarPathfinder:
                     g_score[neighbor_grid] = tentative_g
                     f_score[neighbor_grid] = tentative_g + self.heuristic(neighbor_world, goal, heuristic_type)
                     
-                    # Add to open set if not already there
-                    if not any(neighbor_grid.x == item[1].x and neighbor_grid.y == item[1].y for item in open_set):
-                        heapq.heappush(open_set, (f_score[neighbor_grid], neighbor_grid))
+                    # Add to open set if not already there (updated to check third element)
+                    if not any(neighbor_grid.x == item[2].x and neighbor_grid.y == item[2].y for item in open_set):
+                        counter += 1
+                        heapq.heappush(open_set, (f_score[neighbor_grid], counter, neighbor_grid))
         
         end_time = time.time()
         self.last_search_time = end_time - start_time
@@ -239,6 +243,7 @@ class AStarPathfinder:
             "grid_size": self.grid_size,
             "grid_dimensions": f"{self.grid_width}x{self.grid_height}"
         }
+
 
 class RefinedPathfinder(AStarPathfinder):
     """Enhanced pathfinder with additional optimization techniques"""
@@ -384,6 +389,7 @@ class RefinedPathfinder(AStarPathfinder):
             "success_rate": f"{max(0, 100 - self.failed_attempts * 20):.1f}%"
         }
 
+
 # Utility functions for testing pathfinding
 def test_pathfinding():
     """Test pathfinding functionality"""
@@ -426,6 +432,7 @@ def test_pathfinding():
     else:
         print("❌ No path found")
         return False
+
 
 if __name__ == "__main__":
     test_pathfinding()

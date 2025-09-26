@@ -4,6 +4,7 @@ Utility functions for Robot Navigation AI
 import math
 from typing import List, Tuple, Dict, Any
 
+
 class Point:
     """2D Point class for coordinates"""
     def __init__(self, x: float, y: float):
@@ -17,6 +18,31 @@ class Point:
     
     def __hash__(self):
         return hash((round(self.x, 3), round(self.y, 3)))
+    
+    # ADD THESE COMPARISON METHODS FOR HEAPQ
+    def __lt__(self, other):
+        """Less than comparison for heapq"""
+        if not isinstance(other, Point):
+            return NotImplemented
+        return (self.x, self.y) < (other.x, other.y)
+    
+    def __le__(self, other):
+        """Less than or equal comparison"""
+        if not isinstance(other, Point):
+            return NotImplemented
+        return (self.x, self.y) <= (other.x, other.y)
+    
+    def __gt__(self, other):
+        """Greater than comparison"""
+        if not isinstance(other, Point):
+            return NotImplemented
+        return (self.x, self.y) > (other.x, other.y)
+    
+    def __ge__(self, other):
+        """Greater than or equal comparison"""
+        if not isinstance(other, Point):
+            return NotImplemented
+        return (self.x, self.y) >= (other.x, other.y)
     
     def __str__(self):
         return f"Point({self.x:.1f}, {self.y:.1f})"
@@ -35,6 +61,7 @@ class Point:
     def copy(self):
         """Create a copy of this point"""
         return Point(self.x, self.y)
+
 
 class Node:
     """Node class for A* pathfinding"""
@@ -59,13 +86,16 @@ class Node:
     def __str__(self):
         return f"Node({self.point}, f={self.f_cost:.1f})"
 
+
 def euclidean_distance(p1: Point, p2: Point) -> float:
     """Calculate Euclidean distance between two points"""
     return math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2)
 
+
 def manhattan_distance(p1: Point, p2: Point) -> float:
     """Calculate Manhattan distance between two points"""
     return abs(p1.x - p2.x) + abs(p1.y - p2.y)
+
 
 def diagonal_distance(p1: Point, p2: Point) -> float:
     """Calculate diagonal distance (Chebyshev distance)"""
@@ -73,16 +103,19 @@ def diagonal_distance(p1: Point, p2: Point) -> float:
     dy = abs(p1.y - p2.y)
     return max(dx, dy) + (math.sqrt(2) - 1) * min(dx, dy)
 
+
 def is_point_in_bounds(point: Point, width: int, height: int, margin: int = 0) -> bool:
     """Check if point is within canvas bounds with optional margin"""
     return (margin <= point.x < width - margin and 
             margin <= point.y < height - margin)
+
 
 def clamp_point_to_bounds(point: Point, width: int, height: int, margin: int = 0) -> Point:
     """Clamp point to stay within bounds with margin"""
     x = max(margin, min(width - margin, point.x))
     y = max(margin, min(height - margin, point.y))
     return Point(x, y)
+
 
 def get_neighbors(point: Point, grid_size: int = 10) -> List[Point]:
     """Get 8-directional neighbors for a grid point"""
@@ -100,6 +133,7 @@ def get_neighbors(point: Point, grid_size: int = 10) -> List[Point]:
     
     return neighbors
 
+
 def interpolate_points(start: Point, end: Point, num_points: int) -> List[Point]:
     """Generate intermediate points between start and end"""
     if num_points <= 0:
@@ -113,6 +147,7 @@ def interpolate_points(start: Point, end: Point, num_points: int) -> List[Point]
         points.append(Point(x, y))
     
     return points
+
 
 def simplify_path(path: List[Point], tolerance: float = 5.0) -> List[Point]:
     """Simplify path by removing unnecessary intermediate points using Douglas-Peucker algorithm"""
@@ -135,6 +170,7 @@ def simplify_path(path: List[Point], tolerance: float = 5.0) -> List[Point]:
     
     simplified.append(path[-1])  # Always keep end point
     return simplified
+
 
 def point_to_line_distance(point: Point, line_start: Point, line_end: Point) -> float:
     """Calculate perpendicular distance from point to line segment"""
@@ -165,6 +201,7 @@ def point_to_line_distance(point: Point, line_start: Point, line_end: Point) -> 
     # Return distance to closest point
     return euclidean_distance(point, Point(closest_x, closest_y))
 
+
 def calculate_path_length(path: List[Point]) -> float:
     """Calculate total length of a path"""
     if len(path) < 2:
@@ -176,17 +213,21 @@ def calculate_path_length(path: List[Point]) -> float:
     
     return total_length
 
+
 def format_coordinates(point: Point) -> Dict[str, float]:
     """Convert Point to dictionary format for API calls"""
     return {"x": point.x, "y": point.y}
+
 
 def parse_coordinates(coord_dict: Dict[str, Any]) -> Point:
     """Convert dictionary coordinates to Point object"""
     return Point(float(coord_dict["x"]), float(coord_dict["y"]))
 
+
 def angle_between_points(p1: Point, p2: Point) -> float:
     """Calculate angle in radians from p1 to p2"""
     return math.atan2(p2.y - p1.y, p2.x - p1.x)
+
 
 def rotate_point(point: Point, center: Point, angle: float) -> Point:
     """Rotate point around center by angle (in radians)"""
@@ -204,6 +245,7 @@ def rotate_point(point: Point, center: Point, angle: float) -> Point:
     # Translate back
     return Point(new_x + center.x, new_y + center.y)
 
+
 # Utility functions for debugging and logging
 def format_point_list(points: List[Point], max_points: int = 5) -> str:
     """Format list of points for logging"""
@@ -216,6 +258,7 @@ def format_point_list(points: List[Point], max_points: int = 5) -> str:
         shown = points[:max_points]
         return "[" + ", ".join(str(p) for p in shown) + f", ... and {len(points) - max_points} more]"
 
+
 def validate_point(point: Point, width: int, height: int) -> bool:
     """Validate that a point has valid coordinates"""
     return (isinstance(point.x, (int, float)) and 
@@ -224,3 +267,37 @@ def validate_point(point: Point, width: int, height: int) -> bool:
             not math.isnan(point.y) and
             not math.isinf(point.x) and 
             not math.isinf(point.y))
+
+
+# Test functions
+def test_point_operations():
+    """Test basic point operations"""
+    print("🧪 Testing Point Operations...")
+    
+    p1 = Point(0, 0)
+    p2 = Point(3, 4)
+    
+    # Test distance calculation
+    distance = p1.distance_to(p2)
+    expected_distance = 5.0  # 3-4-5 triangle
+    
+    print(f"Distance test: {distance:.1f} (expected: {expected_distance})")
+    assert abs(distance - expected_distance) < 0.1, "Distance calculation failed"
+    
+    # Test coordinate formatting
+    coords = format_coordinates(p2)
+    expected_coords = {"x": 3.0, "y": 4.0}
+    
+    print(f"Coordinate formatting: {coords} (expected: {expected_coords})")
+    assert coords == expected_coords, "Coordinate formatting failed"
+    
+    # Test coordinate parsing
+    parsed = parse_coordinates(coords)
+    assert parsed == p2, "Coordinate parsing failed"
+    
+    print("✅ All point operations tests passed!")
+    return True
+
+
+if __name__ == "__main__":
+    test_point_operations()
